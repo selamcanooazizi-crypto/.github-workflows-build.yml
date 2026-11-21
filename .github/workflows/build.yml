@@ -13,16 +13,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java 21
+      - name: Setup Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
 
+      - name: Find Gradle project
+        id: find
+        run: |
+          DIR=$(find . -type f \( -name "build.gradle" -o -name "build.gradle.kts" \) -not -path "./.github/*" -print -quit)
+          if [ -z "$DIR" ]; then
+            echo "Gradle build file not found!"
+            echo "Repository contents:"
+            ls -la
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$DIR")
+          echo "project_dir=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
+          echo "Found project: $PROJECT_DIR"
+
       - name: Install Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build
+        working-directory: ${{ steps.find.outputs.project_dir }}
         run: gradle build --stacktrace
 
       - name: Upload JAR
