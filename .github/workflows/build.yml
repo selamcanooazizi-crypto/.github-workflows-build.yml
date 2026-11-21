@@ -1,4 +1,4 @@
-name: Build
+name: Build JAR
 
 on:
   workflow_dispatch:
@@ -8,21 +8,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
+      - name: Extract source ZIP
+        run: |
+          unzip -o "NurikAura_integration_bundle.zip" -d .
+
+      - name: Find Gradle project
+        run: |
+          find . -name build.gradle -o -name build.gradle.kts
+
       - name: Build
         run: |
-          echo "ZIP integration bundle detected"
-          find . -type f
+          gradle build
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
         with:
-          name: NurikAura
-          path: NurikAura_integration_bundle.zip
-          if-no-files-found: warn
+          name: NurikAura-JAR
+          path: '**/build/libs/*.jar'
